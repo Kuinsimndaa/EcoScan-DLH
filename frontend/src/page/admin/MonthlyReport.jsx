@@ -1,100 +1,184 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../../components/Sidebar';
+import axios from 'axios';
+import * as XLSX from 'xlsx';
+import { FileSpreadsheet, Calendar, Download, Clock, Filter } from 'lucide-react';
 
 const MonthlyReport = () => {
-    const [reports, setReports] = useState([]);
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-    const [selectedYear, setSelectedYear] = useState(2026);
+    const [laporan, setLaporan] = useState([]);
+    const [filterTanggal, setFilterTanggal] = useState(""); // Untuk Filter Harian
+    const [filterBulan, setFilterBulan] = useState(new Date().toISOString().slice(0, 7)); // Default Bulan Sekarang
+    const [modeFilter, setModeFilter] = useState("bulan"); // "hari" atau "bulan"
     const [loading, setLoading] = useState(false);
 
-    const fetchReports = async () => {
+    // Fungsi format tanggal ke format Indonesia
+    const formatTanggalIndonesia = (tanggalStr) => {
+        const bulanIndo = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const [tahun, bulan, hari] = tanggalStr.split('-');
+        const bulanIndex = parseInt(bulan) - 1;
+        return `${hari} ${bulanIndo[bulanIndex]} ${tahun}`;
+    };
+
+    const fetchLaporan = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:5000/api/admin/reports?month=${selectedMonth}&year=${selectedYear}`);
-            const result = await response.json();
-            if (result.success) {
-                setReports(result.data);
-            }
-        } catch (error) {
-            console.error("Gagal mengambil laporan:", error);
-            setReports([]);
+            // Menentukan query berdasarkan mode yang dipilih
+            const query = modeFilter === "hari" 
+                ? `tanggal=${filterTanggal}` 
+                : `bulan=${filterBulan}`;
+            
+            const res = await axios.get(`http://localhost:5000/api/scan/laporan?${query}`);
+            setLaporan(res.data);
+        } catch (err) {
+            console.error("Error load data laporan");
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchReports();
-    }, [selectedMonth, selectedYear]);
+        if (modeFilter === "hari" && !filterTanggal) return;
+        fetchLaporan();
+    }, [filterBulan, filterTanggal, modeFilter]);
+
+    const handleExportExcel = () => {
+        if (laporan.length === 0) return alert("Data kosong!");
+
+        const dataExcel = laporan.map((item, index) => ({
+            "No": index + 1,
+            "Tanggal": formatTanggalIndonesia(item.tanggalLengkap),
+            "Jam": item.waktu,
+            "Nama Petugas": item.namaPengendara,
+            "Jenis Armada": item.jenisKendaraan,
+            "Wilayah": item.wilayah,
+            "Mandor": item.mandor,
+            "Total Masuk": item.kedatanganKe,
+            "Tarif (Rp)": Number(item.tarif)
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataExcel);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Laporan EcoScan");
+        const fileName = modeFilter === "hari" ? `Laporan_Harian_${filterTanggal}` : `Laporan_Bulanan_${filterBulan}`;
+        XLSX.writeFile(wb, `${fileName}.xlsx`);
+    };
 
     return (
-        <div className="flex bg-slate-50 min-h-screen font-sans">
-            <Sidebar />
-            <div className="flex-1 p-8">
-                <div className="max-w-6xl mx-auto bg-white rounded-[3rem] shadow-2xl p-10 border border-slate-100">
-                    <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
-                        <div>
-                            <h1 className="text-4xl font-black text-slate-900 tracking-tighter">REKAPAN <span className="text-green-600 italic">BULANAN</span></h1>
-                            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em] mt-1">Laporan Sampah TPS Jalingkos</p>
-                        </div>
+        <div className="p-8 bg-slate-50 min-h-screen">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+                <div className="flex items-center gap-5">
+                    <div className="p-5 bg-green-600 rounded-[2rem] text-white shadow-2xl shadow-green-200">
+                        <FileSpreadsheet size={35} />
+                    </div>
+                    <div>
+                        <h2 className="font-black italic uppercase text-4xl text-slate-900 tracking-tighter leading-none">
+                            REKAPAN <span className="text-green-600">LAPORAN</span>
+                        </h2>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.3em] mt-2">Filter Harian & Bulanan</p>
+                    </div>
+                </div>
 
-                        <div className="flex gap-3 bg-slate-100 p-2 rounded-2xl">
-                            <select className="bg-white px-4 py-2 rounded-xl font-bold text-slate-700 outline-none shadow-sm"
-                                value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
-                                <option value="1">Januari</option>
-                                <option value="2">Februari</option>
-                                <option value="3">Maret</option>
-                                {/* Tambahkan bulan lainnya */}
-                            </select>
-                            <select className="bg-white px-4 py-2 rounded-xl font-bold text-slate-700 outline-none shadow-sm"
-                                value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
-                                <option value="2026">2026</option>
-                                <option value="2025">2025</option>
-                            </select>
-                        </div>
+                {/* Multi-Filter System */}
+                <div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-[2.5rem] shadow-xl border border-slate-100">
+                    <div className="flex bg-slate-100 p-1 rounded-2xl">
+                        <button 
+                            onClick={() => setModeFilter("hari")}
+                            className={`px-4 py-2 rounded-xl font-black text-[10px] transition-all ${modeFilter === 'hari' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-400'}`}
+                        >
+                            HARIAN
+                        </button>
+                        <button 
+                            onClick={() => setModeFilter("bulan")}
+                            className={`px-4 py-2 rounded-xl font-black text-[10px] transition-all ${modeFilter === 'bulan' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-400'}`}
+                        >
+                            BULANAN
+                        </button>
                     </div>
 
-                    <div className="overflow-hidden rounded-[2rem] border border-slate-100 shadow-inner">
-                        <table className="w-full text-left">
-                            <thead className="bg-slate-900 text-white uppercase text-[10px] font-black tracking-widest">
+                    <div className="flex items-center gap-3 px-6 border-l border-slate-100">
+                        <Calendar size={18} className="text-green-600" />
+                        {modeFilter === "hari" ? (
+                            <input 
+                                type="date" 
+                                value={filterTanggal}
+                                onChange={(e) => setFilterTanggal(e.target.value)}
+                                className="outline-none font-black text-slate-700 bg-transparent uppercase cursor-pointer text-sm"
+                            />
+                        ) : (
+                            <input 
+                                type="month" 
+                                value={filterBulan}
+                                onChange={(e) => setFilterBulan(e.target.value)}
+                                className="outline-none font-black text-slate-700 bg-transparent uppercase cursor-pointer text-sm"
+                            />
+                        )}
+                    </div>
+                    
+                    <button 
+                        onClick={handleExportExcel}
+                        className="bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-[1.5rem] font-black text-xs tracking-widest flex items-center gap-3 transition-all active:scale-95 shadow-lg"
+                    >
+                        <Download size={18} /> EKSPOR EXCEL
+                    </button>
+                </div>
+            </div>
+
+            {/* Table Content */}
+            <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-100">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-900 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                                <th className="px-12 py-8"><div className="flex items-center gap-2"><Clock size={14}/> TANGGAL / WAKTU</div></th>
+                                <th className="px-12 py-8">ARMADA</th>
+                                <th className="px-12 py-8">MANDOR</th>
+                                <th className="px-12 py-8 text-center">TOTAL MASUK</th>
+                                <th className="px-12 py-8 text-right">TARIF</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                            {loading ? (
                                 <tr>
-                                    <th className="p-6">No</th>
-                                    <th className="p-6">Waktu Scan</th>
-                                    <th className="p-6">Armada</th>
-                                    <th className="p-6">Petugas Mandor</th>
-                                    <th className="p-6">Lokasi</th>
-                                    <th className="p-6">Ke-</th>
+                                    <td colSpan="5" className="px-12 py-32 text-center animate-pulse font-black text-slate-300">MEMUAT DATA...</td>
                                 </tr>
-                            </thead>
-                            <tbody className="text-sm font-bold text-slate-600">
-                                {loading ? (
-                                    <tr><td colSpan="6" className="p-20 text-center animate-pulse">Memproses Data...</td></tr>
-                                ) : reports.length > 0 ? (
-                                    reports.map((item, index) => (
-                                        <tr key={index} className="border-b border-slate-50 hover:bg-green-50/50 transition-all">
-                                            <td className="p-6 text-slate-400">{index + 1}</td>
-                                            <td className="p-6 font-mono">{new Date(item.tanggal).toLocaleString('id-ID')}</td>
-                                            <td className="p-6">
-                                                <span className="block text-slate-900 uppercase font-black">{item.nama_pengendara}</span>
-                                                <span className="text-[10px] text-green-600 uppercase italic">{item.jenis_armada} - {item.wilayah}</span>
-                                            </td>
-                                            <td className="p-6 italic">{item.nama_mandor}</td>
-                                            <td className="p-6">{item.lokasi}</td>
-                                            <td className="p-6">
-                                                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-black">
-                                                    {item.kedatangan_ke}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan="6" className="p-20 text-center text-slate-300 font-black uppercase tracking-widest">Tidak ada data untuk periode ini</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                            ) : laporan.length > 0 ? laporan.map((item) => (
+                                <tr key={item.id} className="hover:bg-green-50/30 transition-colors group">
+                                    <td className="px-12 py-7">
+                                        <div className="font-black text-slate-900 text-sm italic">{formatTanggalIndonesia(item.tanggalLengkap)}</div>
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{item.waktu} WIB</div>
+                                    </td>
+                                    <td className="px-12 py-7">
+                                        <div className="font-black text-slate-900 uppercase text-base group-hover:text-green-700 transition-colors leading-tight">
+                                            {item.namaPengendara}
+                                        </div>
+                                        <div className="text-[10px] font-bold text-green-600 uppercase tracking-tighter mt-0.5">
+                                            {item.jenisKendaraan} — <span className="text-slate-400 italic font-medium">{item.wilayah}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-12 py-7">
+                                        <span className="font-black text-slate-500 uppercase text-xs tracking-tight">
+                                            {item.mandor}
+                                        </span>
+                                    </td>
+                                    <td className="px-12 py-7 text-center">
+                                        <span className="inline-block px-5 py-2 bg-slate-100 group-hover:bg-slate-900 group-hover:text-white transition-all rounded-2xl font-black text-xs italic">
+                                            KE-{item.kedatanganKe}
+                                        </span>
+                                    </td>
+                                    <td className="px-12 py-7 text-right font-black text-slate-900 text-xl tracking-tighter">
+                                        <span className="text-green-600 text-xs mr-1 font-bold italic">Rp</span>
+                                        {Number(item.tarif).toLocaleString('id-ID')}
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="5" className="px-12 py-40 text-center">
+                                        <div className="font-black text-slate-200 uppercase text-3xl tracking-[0.5em]">Data Tidak Ditemukan</div>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

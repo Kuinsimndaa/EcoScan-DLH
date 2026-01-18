@@ -1,14 +1,13 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 
-const pool = mysql.createPool({
+const db = mysql.createPool({
     host: 'localhost',
-    user: 'root',      
-    password: '',      // Di Laragon defaultnya kosong
-    database: 'dlh_ecoscan', 
+    user: 'root',
+    password: '', 
+    database: 'dlh_ecoscan',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 });
 
-const promisePool = pool.promise();
-module.exports = promisePool;
+module.exports = db;

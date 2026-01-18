@@ -4,14 +4,26 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  root: './', // Memastikan Vite mencari index.html di folder frontend
+  root: './',
+  publicDir: 'public',
   server: {
     port: 5050,
-    strictPort: true,
-    host: true,
-    open: true
+    strictPort: false,
+    host: '0.0.0.0',
+    open: false,
+    hmr: {
+      host: 'localhost',
+      port: 5050,
+      protocol: 'ws'
+    },
+    headers: {
+      'Cache-Control': 'no-cache',
+      'Service-Worker-Allowed': '/'
+    }
   },
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    emptyOutDir: true,
+    copyPublicDir: true
   }
 })

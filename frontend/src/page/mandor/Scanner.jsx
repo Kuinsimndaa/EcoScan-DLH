@@ -1,150 +1,176 @@
-import React, { useState } from 'react';
-import QrScanner from 'react-qr-scanner';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
+import axios from 'axios';
+import { QrCode, ArrowLeft, Camera, RefreshCw } from 'lucide-react';
+import Notification from '../../components/Notification';
 
 const Scanner = () => {
-  const [loading, setLoading] = useState(false);
-  const [lastScanned, setLastScanned] = useState('');
-  const navigate = useNavigate();
+    const [isScanning, setIsScanning] = useState(false);
+    const [html5QrCode, setHtml5QrCode] = useState(null);
+    const [notification, setNotification] = useState(null);
 
-  const handleScan = async (data) => {
-    // 1. Validasi: data harus ada, tidak sedang loading, dan bukan token yang sama berturut-turut
-    if (data && !loading) {
-      const token = typeof data === 'string' ? data : data.text;
+    useEffect(() => {
+        // Inisialisasi instance scanner saat komponen dimuat
+        const scanner = new Html5Qrcode("reader");
+        setHtml5QrCode(scanner);
 
-      if (!token || token === lastScanned) return;
+        // Cleanup: Hentikan kamera saat berpindah halaman
+        return () => {
+            if (scanner.isScanning) {
+                scanner.stop().catch(err => console.error("Gagal stop scanner:", err));
+            }
+        };
+    }, []);
 
-      console.log("Token Terdeteksi:", token);
-      setLoading(true);
-      setLastScanned(token); // Simpan token terakhir untuk mencegah double scan
-
-      const userData = localStorage.getItem('user');
-      if (!userData) {
-        alert("Sesi berakhir, silakan login kembali.");
-        navigate('/');
-        return;
-      }
-
-      const user = JSON.parse(userData);
-
-      try {
-        const response = await fetch('http://localhost:5000/api/scan/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            qr_token: token.trim(),
-            id_user: user.id,
-            lokasi: 'TPS Jalingkos'
-          })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          alert("BERHASIL: " + result.message);
-        } else {
-          // Menangani pesan "QR Code Tidak Dikenali" dari backend
-          alert("GAGAL: " + result.message);
+    const startScanner = async () => {
+        try {
+            setIsScanning(true);
+            await html5QrCode.start(
+                { facingMode: "environment" }, // Gunakan kamera belakang
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                (decodedText) => {
+                    // Jika Scan Berhasil
+                    html5QrCode.stop();
+                    setIsScanning(false);
+                    sendDataToBackend(decodedText);
+                },
+                (errorMessage) => {
+                    // Abaikan error pencarian frame agar console tidak penuh
+                }
+            );
+        } catch (err) {
+            console.error("Gagal membuka kamera:", err);
+            alert("Izin kamera ditolak atau kamera tidak ditemukan.");
+            setIsScanning(false);
         }
-      } catch (error) {
-        console.error("Fetch Error:", error);
-        alert("Gagal terhubung ke server backend (Port 5000).");
-      } finally {
-        // Berikan jeda 3 detik sebelum memperbolehkan scan berikutnya
-        setTimeout(() => {
-          setLoading(false);
-          setLastScanned('');
-        }, 3000);
-      }
-    }
-  };
+    };
 
-  const handleError = (err) => {
-    console.error("Camera Error:", err);
-    alert("Masalah Kamera: Pastikan izin kamera diberikan dan gunakan HTTPS/Localhost.");
-  };
+    const sendDataToBackend = async (decodedText) => {
+        try {
+            // URL diarahkan ke endpoint backend yang sudah kita perbaiki
+            const response = await axios.post('http://localhost:5000/api/scan/save', {
+                qrcode: decodedText,
+                mandor: localStorage.getItem('nama') || 'Petugas Lapangan'
+            });
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/');
-  };
+            if (response.data.success) {
+                // Tampilkan notifikasi sukses dengan suara
+                setNotification({
+                    type: 'success',
+                    title: '✓ SCAN BERHASIL',
+                    message: 'Data armada telah tercatat di sistem',
+                    duration: 3000,
+                    playSound: true
+                });
 
-  return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white font-sans">
-      <div className="w-full max-w-md bg-slate-800 rounded-[3rem] p-8 shadow-2xl border border-slate-700 relative overflow-hidden">
-        
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-block px-4 py-1 bg-green-500/10 rounded-full mb-2">
-            <span className="text-green-500 text-[10px] font-black uppercase tracking-[0.2em]">Mode Mandor</span>
-          </div>
-          <h2 className="text-2xl font-black italic uppercase tracking-tighter">
-            EcoScan<span className="text-green-500">Scanner</span>
-          </h2>
-          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">
-            Dinas Lingkungan Hidup
-          </p>
-        </div>
+                // Redirect ke dashboard setelah notifikasi
+                setTimeout(() => {
+                    window.location.href = '/mandor/dashboard';
+                }, 2500);
+            }
+        } catch (error) {
+            // Mengambil pesan error spesifik dari backend (misal: "QR tidak terdaftar")
+            const errorMsg = error.response?.data?.message || "Terjadi kesalahan pada server";
+            
+            setNotification({
+                type: 'error',
+                title: '✗ SCAN GAGAL',
+                message: errorMsg,
+                playSound: false
+            });
+            
+            console.error("Detail Error:", error.response?.data);
+            // Reload agar scanner siap digunakan kembali jika gagal
+            setTimeout(() => window.location.reload(), 2000);
+        }
+    };
 
-        {/* Scanner Container */}
-        <div className="relative overflow-hidden rounded-[2.5rem] border-4 border-slate-700 aspect-square bg-black shadow-inner">
-          <QrScanner
-            delay={500}
-            onError={handleError}
-            onScan={handleScan}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            constraints={{
-              video: { facingMode: "environment" } // Prioritaskan kamera belakang
-            }}
-          />
-          
-          {/* Scanning Overlay UI */}
-          <div className="absolute inset-0 border-[30px] border-black/30 pointer-events-none"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 border-2 border-green-500/50 rounded-[2rem]"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-0.5 bg-green-500/40 shadow-[0_0_15px_rgba(34,197,94,0.8)] animate-scan-line"></div>
-        </div>
+    return (
+        <div className="p-8 bg-slate-50 min-h-screen flex flex-col items-center justify-center">
+            <div className="w-full max-w-lg bg-white rounded-[4rem] shadow-2xl p-12 border border-slate-100 text-center">
+                
+                {/* Header Icon */}
+                <div className="inline-block p-5 bg-green-600 rounded-3xl text-white mb-6 shadow-xl shadow-green-200">
+                    <QrCode size={40} />
+                </div>
 
-        {/* Status Indicator */}
-        <div className="mt-6 flex items-center justify-center gap-3">
-          {loading ? (
-            <div className="flex items-center gap-2 text-green-500 font-bold animate-pulse text-xs uppercase tracking-widest">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              Memproses Data...
+                <h2 className="font-black italic uppercase text-3xl text-slate-900 tracking-tighter leading-none mb-2">
+                    MULAI <span className="text-green-600">SCANNING</span>
+                </h2>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-10">
+                    Arahkan kamera ke QR Code pada armada
+                </p>
+
+                {/* Area Scanner */}
+                <div className="relative overflow-hidden rounded-[3rem] bg-slate-900 aspect-square mb-8 shadow-inner border-8 border-slate-50 flex items-center justify-center">
+                    <div id="reader" className="w-full h-full object-cover"></div>
+                    
+                    {/* Tombol Buka Kamera (Muncul jika tidak sedang scanning) */}
+                    {!isScanning && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm">
+                            <button 
+                                onClick={startScanner}
+                                className="group flex flex-col items-center gap-4"
+                            >
+                                <div className="p-8 bg-green-500 rounded-full text-white shadow-2xl shadow-green-500/50 group-hover:scale-110 transition-transform duration-300">
+                                    <Camera size={48} />
+                                </div>
+                                <span className="font-black italic text-white text-xl uppercase tracking-tighter group-hover:text-green-400">
+                                    Buka Kamera Sekarang
+                                </span>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Overlay Bingkai Scan (Muncul saat scanning) */}
+                    {isScanning && (
+                        <div className="absolute inset-0 pointer-events-none border-[3rem] border-slate-900/40">
+                            <div className="w-full h-full border-2 border-green-500 rounded-2xl animate-pulse relative">
+                                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-green-400 -mt-1 -ml-1"></div>
+                                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-green-400 -mt-1 -mr-1"></div>
+                                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-green-400 -mb-1 -ml-1"></div>
+                                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-green-400 -mb-1 -mr-1"></div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Info Card */}
+                <div className="bg-slate-50 rounded-2xl py-4 px-6 mb-8 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white rounded-lg shadow-sm text-green-600">
+                            <RefreshCw size={16} />
+                        </div>
+                        <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Metode Scan</span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase text-slate-900">QR ARMADA</span>
+                </div>
+
+                {/* Back Link */}
+                <button 
+                    onClick={() => window.location.href = '/mandor/dashboard'}
+                    className="flex items-center justify-center gap-3 mx-auto py-2 font-black text-xs uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all"
+                >
+                    <ArrowLeft size={16} /> Kembali ke Dashboard
+                </button>
+
+                {/* Notification */}
+                {notification && (
+                    <Notification
+                        type={notification.type}
+                        title={notification.title}
+                        message={notification.message}
+                        duration={notification.duration || 4000}
+                        playSound={notification.playSound}
+                        onClose={() => setNotification(null)}
+                    />
+                )}
             </div>
-          ) : (
-            <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-widest">
-              <div className="w-2 h-2 bg-slate-600 rounded-full"></div>
-              Siap Memindai
-            </div>
-          )}
         </div>
-
-        {/* Actions */}
-        <div className="mt-8 space-y-3">
-           <button 
-            onClick={handleLogout}
-            className="w-full py-4 bg-slate-700/50 hover:bg-red-600/20 hover:text-red-500 border border-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] transition-all"
-          >
-            Keluar Sistem
-          </button>
-        </div>
-      </div>
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes scan-line {
-          0% { top: 20%; }
-          100% { top: 80%; }
-        }
-        .animate-scan-line {
-          animation: scan-line 2s linear infinite;
-        }
-      `}} />
-      
-      <p className="mt-8 text-slate-600 text-[9px] font-bold uppercase tracking-[0.4em]">
-        Kabupaten Tegal
-      </p>
-    </div>
-  );
+    );
 };
 
 export default Scanner;
