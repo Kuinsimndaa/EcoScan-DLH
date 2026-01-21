@@ -234,4 +234,53 @@ const generateBilling = async (req, res) => {
     }
 };
 
-module.exports = { saveScan, getLaporan, getDashboardStats, generateBilling };
+/**
+ * DELETE /api/scan/laporan/:id
+ * Hapus satu record laporan berdasarkan ID
+ */
+const deleteLaporan = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Validasi ID
+        if (!id || isNaN(id)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "ID laporan tidak valid" 
+            });
+        }
+
+        // Cek apakah record ada
+        const [checkRows] = await db.execute('SELECT id FROM laporan WHERE id = ?', [id]);
+        if (checkRows.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Data laporan tidak ditemukan" 
+            });
+        }
+
+        // Hapus record
+        const [result] = await db.execute('DELETE FROM laporan WHERE id = ?', [id]);
+
+        if (result.affectedRows > 0) {
+            console.log(`✅ LAPORAN DELETED: ID ${id}`);
+            return res.status(200).json({ 
+                success: true, 
+                message: "Data laporan berhasil dihapus" 
+            });
+        } else {
+            return res.status(500).json({ 
+                success: false, 
+                message: "Gagal menghapus data laporan" 
+            });
+        }
+    } catch (error) {
+        console.error("❌ Delete Laporan Error:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Terjadi kesalahan saat menghapus: " + error.message 
+        });
+    }
+};
+
+module.exports = { saveScan, getLaporan, getDashboardStats, generateBilling, deleteLaporan };

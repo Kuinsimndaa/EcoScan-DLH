@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { saveScan, getLaporan, getDashboardStats, generateBilling } = require('../controllers/TransactionController');
+const { saveScan, getLaporan, getDashboardStats, generateBilling, deleteLaporan } = require('../controllers/TransactionController');
 
 /**
  * Jalur Lengkap: POST http://localhost:5000/api/scan/save
@@ -27,5 +27,12 @@ router.get('/dashboard-stats', getDashboardStats);
  * Query: ?bulan=YYYY-MM atau ?tanggal=YYYY-MM-DD
  */
 router.post('/generate-billing', generateBilling);
+
+/**
+ * Jalur Lengkap: DELETE http://localhost:5000/api/scan/laporan/:id
+ * Digunakan untuk menghapus satu record laporan
+ * Param: id (ID dari tabel laporan)
+ */
+router.delete('/laporan/:id', deleteLaporan);
 
 module.exports = router;
