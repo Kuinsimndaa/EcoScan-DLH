@@ -9,6 +9,14 @@ const { saveScan, getLaporan, getDashboardStats, generateBilling, deleteLaporan 
 router.post('/save', saveScan);
 
 /**
+ * Jalur Lengkap: DELETE http://localhost:5000/api/scan/laporan/:id
+ * HARUS SEBELUM GET /laporan karena route parameter spesifik harus didahulukan
+ * Digunakan untuk menghapus satu record laporan
+ * Param: id (ID dari tabel laporan)
+ */
+router.delete('/laporan/:id', deleteLaporan);
+
+/**
  * Jalur Lengkap: GET http://localhost:5000/api/scan/laporan
  * Digunakan untuk Dashboard dan Rekapan Laporan
  * Query: ?tanggal=YYYY-MM-DD atau ?bulan=YYYY-MM
@@ -27,12 +35,5 @@ router.get('/dashboard-stats', getDashboardStats);
  * Query: ?bulan=YYYY-MM atau ?tanggal=YYYY-MM-DD
  */
 router.post('/generate-billing', generateBilling);
-
-/**
- * Jalur Lengkap: DELETE http://localhost:5000/api/scan/laporan/:id
- * Digunakan untuk menghapus satu record laporan
- * Param: id (ID dari tabel laporan)
- */
-router.delete('/laporan/:id', deleteLaporan);
 
 module.exports = router;
