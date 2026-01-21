@@ -3,13 +3,23 @@ const db = require('../config/database'); // Sesuaikan nama file
 /**
  * Helper function untuk mendapatkan tanggal hari ini dengan timezone lokal (Indonesia UTC+7)
  * Mengembalikan format YYYY-MM-DD
+ * Method: Menggunakan locale string untuk Indonesia
  */
 const getTodayLocalDate = () => {
-    // Create date object for Indonesia timezone (UTC+7)
-    const now = new Date();
-    // Add 7 hours to adjust from UTC to UTC+7
-    const localDate = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-    return localDate.toISOString().split('T')[0];
+    // Gunakan toLocaleString dengan timezone Asia/Jakarta
+    const formatter = new Intl.DateTimeFormat('id-ID', {
+        timeZone: 'Asia/Jakarta',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+    
+    const parts = formatter.formatToParts(new Date());
+    const year = parts.find(p => p.type === 'year').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const day = parts.find(p => p.type === 'day').value;
+    
+    return `${year}-${month}-${day}`;
 };
 
 const saveScan = async (req, res) => {
@@ -17,6 +27,8 @@ const saveScan = async (req, res) => {
         const { qrcode, mandor } = req.body;
         const qrcodeClean = qrcode.trim();
         const hariIni = getTodayLocalDate();
+        
+        console.log(`📅 TODAY DATE (JAKARTA TZ): ${hariIni}`);
 
         // 1. Cari armada
         const [armadaRows] = await db.execute('SELECT * FROM armada WHERE qrcode = ?', [qrcodeClean]);
@@ -78,10 +90,23 @@ const getLaporan = async (req, res) => {
         
         // Mapping field agar sesuai dengan frontend expectation
         const mappedRows = rows.map(row => {
-            // Format tanggal: YYYY-MM-DD
-            const tanggalStr = row.tanggal instanceof Date 
-                ? row.tanggal.toISOString().split('T')[0]
-                : row.tanggal;
+            // Format tanggal: YYYY-MM-DD (gunakan string langsung dari database, jangan convert lagi)
+            // Database sudah menyimpan dalam format YYYY-MM-DD, tidak perlu ubah lagi
+            let tanggalStr = row.tanggal;
+            if (row.tanggal instanceof Date) {
+                // Jika masih Date object, format dengan Intl untuk timezone lokal
+                const formatter = new Intl.DateTimeFormat('id-ID', {
+                    timeZone: 'Asia/Jakarta',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                const parts = formatter.formatToParts(row.tanggal);
+                const year = parts.find(p => p.type === 'year').value;
+                const month = parts.find(p => p.type === 'month').value;
+                const day = parts.find(p => p.type === 'day').value;
+                tanggalStr = `${year}-${month}-${day}`;
+            }
             
             return {
                 id: row.id,
