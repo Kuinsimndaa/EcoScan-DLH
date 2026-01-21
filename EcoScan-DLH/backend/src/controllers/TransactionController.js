@@ -1,10 +1,22 @@
 const db = require('../config/database'); // Sesuaikan nama file
 
+/**
+ * Helper function untuk mendapatkan tanggal hari ini dengan timezone lokal (Indonesia UTC+7)
+ * Mengembalikan format YYYY-MM-DD
+ */
+const getTodayLocalDate = () => {
+    // Create date object for Indonesia timezone (UTC+7)
+    const now = new Date();
+    // Add 7 hours to adjust from UTC to UTC+7
+    const localDate = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    return localDate.toISOString().split('T')[0];
+};
+
 const saveScan = async (req, res) => {
     try {
         const { qrcode, mandor } = req.body;
         const qrcodeClean = qrcode.trim();
-        const hariIni = new Date().toISOString().split('T')[0];
+        const hariIni = getTodayLocalDate();
 
         // 1. Cari armada
         const [armadaRows] = await db.execute('SELECT * FROM armada WHERE qrcode = ?', [qrcodeClean]);
@@ -94,7 +106,7 @@ const getLaporan = async (req, res) => {
 
 const getDashboardStats = async (req, res) => {
     try {
-        const hariIni = new Date().toISOString().split('T')[0];
+        const hariIni = getTodayLocalDate();
 
         // 1. Total Kedatangan Hari Ini
         const [totalRows] = await db.execute(
