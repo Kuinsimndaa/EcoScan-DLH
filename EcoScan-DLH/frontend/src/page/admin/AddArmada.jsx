@@ -164,77 +164,132 @@ const AddArmada = () => {
     );
 
     return (
-        <div className="p-8 bg-slate-50 min-h-screen font-sans">
-            <div className="flex items-center gap-4 mb-10">
-                <div className="p-4 bg-green-500 rounded-2xl text-white shadow-lg">
+        <div className="p-8 bg-gradient-to-b from-slate-50 via-blue-50/20 to-slate-50 min-h-screen font-sans">
+            <div className="flex items-center gap-4 mb-12">
+                <div className="p-4 bg-gradient-to-br from-green-600 to-green-700 rounded-2xl text-white shadow-lg shadow-green-300/50">
                     <BadgeCheck size={32} />
                 </div>
-                <h1 className="text-4xl font-black italic text-slate-900 uppercase">
-                    REGISTRASI <span className="text-green-600">ARMADA</span>
-                </h1>
+                <div>
+                    <h1 className="text-4xl font-black italic text-slate-900 uppercase">
+                        REGISTRASI <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">ARMADA</span>
+                    </h1>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Daftarkan dan Generate QR Code untuk Kartu Armada</p>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
                 {/* FORM */}
-                <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100">
-                    <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
-                        <input placeholder="Nama Petugas" value={formData.namaPetugas} onChange={(e) => setFormData({...formData, namaPetugas: e.target.value})} className="p-5 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-green-500" required />
-                        <input placeholder="Mandor Lapangan" value={formData.mandor} onChange={(e) => setFormData({...formData, mandor: e.target.value})} className="p-5 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-green-500" required />
-                        <select value={formData.jenisArmada} onChange={(e) => setFormData({...formData, jenisArmada: e.target.value})} className="p-5 bg-slate-50 rounded-2xl font-bold outline-none">
-                            <option value="TOSSA">TOSSA</option>
-                            <option value="GEROBAK">GEROBAK</option>
-                        </select>
-                        <input placeholder="Wilayah Kerja" value={formData.wilayah} onChange={(e) => setFormData({...formData, wilayah: e.target.value})} className="p-5 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-green-500" required />
-                        <input type="number" value={formData.tarif} onChange={(e) => setFormData({...formData, tarif: e.target.value})} className="col-span-2 p-5 bg-slate-50 rounded-2xl font-black text-xl outline-none" required />
-                        <button type="submit" disabled={loading} className="col-span-2 bg-slate-900 text-white py-6 rounded-[2rem] font-black uppercase hover:bg-black transition-all flex items-center justify-center gap-2">
+                <div className="lg:col-span-2 bg-gradient-to-br from-white via-slate-50/50 to-blue-50/30 p-10 rounded-[2.5rem] shadow-xl border border-slate-200/50 hover:shadow-2xl transition-all backdrop-blur-sm">
+                    <h3 className="font-black text-xl text-slate-900 uppercase mb-6 flex items-center gap-3">
+                        <Plus size={24} className="text-green-600" />
+                        Form Pendaftaran Armada
+                    </h3>
+                    <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-5">
+                        <div className="col-span-2 grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-black uppercase text-slate-500 ml-3 mb-2 block tracking-[0.1em]">Nama Petugas</label>
+                                <input placeholder="Masukkan nama..." value={formData.namaPetugas} onChange={(e) => setFormData({...formData, namaPetugas: e.target.value})} className="w-full p-4 bg-gradient-to-b from-white to-slate-50 rounded-xl font-bold outline-none border-2 border-slate-200 focus:border-green-500 focus:from-white focus:to-green-50 transition-all shadow-sm" required />
+                            </div>
+                            <div>
+                                <label className="text-xs font-black uppercase text-slate-500 ml-3 mb-2 block tracking-[0.1em]">Mandor Lapangan</label>
+                                <input placeholder="Nama mandor..." value={formData.mandor} onChange={(e) => setFormData({...formData, mandor: e.target.value})} className="w-full p-4 bg-gradient-to-b from-white to-slate-50 rounded-xl font-bold outline-none border-2 border-slate-200 focus:border-green-500 focus:from-white focus:to-green-50 transition-all shadow-sm" required />
+                            </div>
+                        </div>
+                        
+                        <div className="col-span-2 grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-black uppercase text-slate-500 ml-3 mb-2 block tracking-[0.1em]">Jenis Armada</label>
+                                <select value={formData.jenisArmada} onChange={(e) => setFormData({...formData, jenisArmada: e.target.value})} className="w-full p-4 bg-gradient-to-b from-white to-slate-50 rounded-xl font-bold outline-none border-2 border-slate-200 focus:border-green-500 transition-all shadow-sm">
+                                    <option value="TOSSA">🚚 TOSSA</option>
+                                    <option value="GEROBAK">🛵 GEROBAK</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-black uppercase text-slate-500 ml-3 mb-2 block tracking-[0.1em]">Wilayah Kerja</label>
+                                <input placeholder="Wilayah..." value={formData.wilayah} onChange={(e) => setFormData({...formData, wilayah: e.target.value})} className="w-full p-4 bg-gradient-to-b from-white to-slate-50 rounded-xl font-bold outline-none border-2 border-slate-200 focus:border-green-500 focus:from-white focus:to-green-50 transition-all shadow-sm" required />
+                            </div>
+                        </div>
+                        
+                        <div className="col-span-2">
+                            <label className="text-xs font-black uppercase text-slate-500 ml-3 mb-2 block tracking-[0.1em]">Tarif Retribusi (Rp)</label>
+                            <input type="number" value={formData.tarif} onChange={(e) => setFormData({...formData, tarif: e.target.value})} className="w-full p-4 bg-gradient-to-b from-white to-slate-50 rounded-xl font-black text-lg outline-none border-2 border-slate-200 focus:border-green-500 focus:from-white focus:to-green-50 transition-all shadow-sm" required />
+                        </div>
+                        
+                        <button type="submit" disabled={loading} className="col-span-2 bg-gradient-to-br from-green-600 to-green-700 text-white py-5 rounded-xl font-black uppercase hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center gap-3 hover:shadow-lg active:scale-95 border border-green-500/30">
                             {loading ? "MENYIMPAN..." : <><Plus size={20}/> DAFTARKAN & GENERATE QR</>}
                         </button>
                     </form>
                 </div>
 
-                {/* PREVIEW QR */}
-                <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 flex flex-col items-center">
-                    <div ref={qrRef} className="bg-white p-6 rounded-[2.5rem] border-2 border-slate-50 flex flex-col items-center">
-                        {qrValue ? (
-                            <QRCodeCanvas value={qrValue} size={180} level={"H"} includeMargin={true} />
-                        ) : (
-                            <div className="w-44 h-44 bg-slate-50 rounded-[2rem] flex items-center justify-center">
-                                <QrCode size={50} className="text-slate-100" />
+                {/* PREVIEW QR - Professional Card Design */}
+                <div className="bg-gradient-to-br from-white via-slate-50/50 to-green-50/30 p-6 rounded-[2.5rem] shadow-xl border border-slate-200/50 flex flex-col items-center sticky top-8 backdrop-blur-sm">
+                    <div ref={qrRef} className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 rounded-2xl flex flex-col items-center w-full text-white" style={{ width: '280px' }}>
+                        {/* Header */}
+                        <div className="text-center mb-6 pb-4 border-b border-slate-700/50 w-full">
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-green-400 mb-1">EcoScan DLH</p>
+                            <p className="text-[9px] font-bold text-slate-300">Kabupaten Tegal</p>
+                        </div>
+
+                        {/* QR Code */}
+                        <div className="bg-white p-3 rounded-xl mb-5">
+                            {qrValue ? (
+                                <QRCodeCanvas value={qrValue} size={150} level={"H"} includeMargin={true} />
+                            ) : (
+                                <div className="w-36 h-36 bg-slate-700 rounded-lg flex items-center justify-center">
+                                    <QrCode size={48} className="text-slate-600" />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Info Section */}
+                        <div className="text-center w-full px-2">
+                            <p className="font-black text-sm uppercase leading-tight mb-2 text-white">{selectedPetugas?.nama || "NAMA PETUGAS"}</p>
+                            <div className="bg-white/10 p-2 rounded-lg mb-3 border border-slate-700/50">
+                                <p className="text-[9px] font-bold text-green-300 uppercase tracking-tight">{selectedPetugas?.jenis || "JENIS"}</p>
+                                <p className="text-[8px] font-medium text-slate-300 mt-0.5">Wilayah: {selectedPetugas?.wilayah || "—"}</p>
                             </div>
-                        )}
-                        <div className="mt-4 text-center">
-                            <p className="font-black text-slate-900 uppercase text-sm">{selectedPetugas?.nama || "NAMA PETUGAS"}</p>
-                            <p className="text-[10px] font-bold text-green-600 uppercase mt-1">{selectedPetugas?.jenis || "JENIS"} — {selectedPetugas?.wilayah || "WILAYAH"}</p>
+                            <div className="bg-green-600/20 p-2 rounded-lg border border-green-500/50">
+                                <p className="text-[8px] font-bold text-green-300 uppercase">Terverifikasi</p>
+                                <p className="text-[8px] font-medium text-slate-200 mt-0.5">Armada Resmi DLH</p>
+                            </div>
                         </div>
                     </div>
-                    <button onClick={downloadJPG} disabled={!qrValue} className="mt-8 w-full py-5 bg-green-600 text-white rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-3 disabled:bg-slate-100">
-                        <Download size={18} /> DOWNLOAD JPG
+                    
+                    <button onClick={downloadJPG} disabled={!qrValue} className="mt-6 w-full py-4 bg-gradient-to-br from-green-600 to-green-700 text-white rounded-xl font-black uppercase text-sm flex items-center justify-center gap-3 disabled:bg-slate-300 hover:from-green-700 hover:to-green-800 transition-all hover:shadow-lg active:scale-95">
+                        <Download size={18} /> DOWNLOAD KARTU
                     </button>
+                    
+                    <div className="mt-4 text-[10px] text-slate-500 text-center">
+                        <p className="font-bold">Ukuran: 280x400px</p>
+                        <p>Siap untuk dicetak ke kartu</p>
+                    </div>
                 </div>
             </div>
 
             {/* TABEL */}
-            <div className="mt-12 bg-white rounded-[3rem] shadow-xl overflow-hidden border border-slate-100">
-                <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Truck className="text-green-600" size={24} />
-                        <h2 className="font-black uppercase italic text-slate-800 text-xl">Data Armada Terdaftar</h2>
+            <div className="bg-gradient-to-br from-white via-slate-50/50 to-blue-50/30 rounded-[2.5rem] shadow-xl overflow-hidden border border-slate-200/50 hover:shadow-2xl transition-all backdrop-blur-sm">
+                <div className="p-8 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-blue-50/30 flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-gradient-to-br from-green-600 to-green-700 text-white rounded-xl">
+                            <Truck size={24} />
+                        </div>
+                        <h2 className="font-black uppercase italic text-slate-900 text-xl">Daftar Armada Terdaftar</h2>
                     </div>
-                    <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl border-2 border-slate-200">
+                    <div className="flex items-center gap-3 bg-slate-100 px-5 py-3 rounded-xl border-2 border-slate-200">
                         <Search size={18} className="text-slate-400" />
                         <input
                             type="text"
                             placeholder="Cari nama petugas..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-slate-50 outline-none font-medium text-slate-700 placeholder-slate-400 text-sm"
+                            className="bg-slate-100 outline-none font-medium text-slate-700 placeholder-slate-400 text-sm"
                         />
                     </div>
                 </div>
                 <div className="overflow-auto">
                     <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky top-0">
-                            <tr>
+                        <thead className="bg-gradient-to-r from-slate-900 to-slate-800 sticky top-0">
+                            <tr className="text-[10px] font-black text-slate-300 uppercase tracking-[0.15em]">
                                 <th className="px-8 py-6">No</th>
                                 <th className="px-8 py-6">Nama Petugas</th>
                                 <th className="px-8 py-6">Mandor</th>
@@ -242,12 +297,12 @@ const AddArmada = () => {
                                 <th className="px-8 py-6 text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {filteredArmada.map((item, idx) => (
-                                <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                        <tbody className="divide-y divide-slate-100">
+                            {filteredArmada.length > 0 ? filteredArmada.map((item, idx) => (
+                                <tr key={item.id} className="hover:bg-gradient-to-r hover:from-green-50/50 hover:to-blue-50/50 transition-all group">
                                     <td className="px-8 py-6 font-black text-slate-500">{idx + 1}</td>
                                     <td className="px-8 py-6">
-                                        <div className="font-black text-slate-900 uppercase">{item.namaPetugas}</div>
+                                        <div className="font-black text-slate-900 uppercase group-hover:text-green-700 transition-colors">{item.namaPetugas}</div>
                                         <div className="text-[9px] font-bold text-green-600 uppercase mt-1">{item.jenisArmada} — {item.wilayah}</div>
                                     </td>
                                     <td className="px-8 py-6">
@@ -258,16 +313,26 @@ const AddArmada = () => {
                                     </td>
                                     <td className="px-8 py-6 text-center">
                                         <div className="flex justify-center gap-2">
-                                            <button onClick={() => handleViewQR(item)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all" title="Lihat QR Code">
+                                            <button onClick={() => handleViewQR(item)} className="p-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all hover:shadow-md active:scale-95" title="Lihat QR Code">
                                                 <Eye size={16} />
                                             </button>
-                                            <button onClick={() => handleDelete(item.id)} className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all" title="Hapus Data">
+                                            <button onClick={() => handleDelete(item.id)} className="p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all hover:shadow-md active:scale-95" title="Hapus Data">
                                                 <Trash2 size={16} />
                                             </button>
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            )) : (
+                                <tr>
+                                    <td colSpan="5" className="px-8 py-20 text-center">
+                                        <div className="inline-block">
+                                            <Truck size={40} className="text-slate-200 mx-auto mb-3" />
+                                            <p className="font-black text-slate-300 uppercase text-lg tracking-[0.3em]">Belum Ada Data Armada</p>
+                                            <p className="text-xs text-slate-400 mt-2">Daftarkan armada baru melalui form di atas</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

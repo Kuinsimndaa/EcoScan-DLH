@@ -63,8 +63,8 @@ const Login = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-slate-50 font-sans">
-            <div className="bg-white p-10 rounded-[3.5rem] shadow-2xl w-[480px] border border-slate-100 flex flex-col items-center">
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-green-50/20 font-sans">
+            <div className="bg-gradient-to-br from-white via-slate-50 to-blue-50/50 p-10 rounded-[3.5rem] shadow-2xl w-[480px] border border-slate-100/80 flex flex-col items-center backdrop-blur-sm">
                 
                 {/* 1. LOGO PEMKAB / DLH */}
                 <img 
@@ -126,7 +126,7 @@ const Login = () => {
                     </div>
 
                     {/* CAPTCHA Section */}
-                    <div className="bg-slate-100 p-6 rounded-2xl border-2 border-slate-200">
+                    <div className="bg-gradient-to-br from-slate-100/80 via-blue-50/50 to-slate-100/80 p-6 rounded-2xl border-2 border-slate-200/50 backdrop-blur-sm">
                         <label className="text-[10px] font-black uppercase text-slate-400 mb-4 block tracking-widest">Verifikasi Keamanan</label>
                         <SimpleCaptcha onVerify={setIsCaptchaVerified} />
                     </div>
